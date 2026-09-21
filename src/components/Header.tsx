@@ -7,7 +7,7 @@ import { createSamplePdf, parsePdfFile } from '../services/pdfService';
 import { setViewerDoc } from '../store/viewerSlice';
 import { PaprbndrLogo } from './PaprbndrLogo';
 
-import { setMarkdownContent } from '../store/markdownSlice';
+import { setMarkdownContent, updateReadingSettings } from '../store/markdownSlice';
 
 export const Header: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -33,11 +33,12 @@ export const Header: React.FC = () => {
       if (mdFile) {
         const text = await mdFile.text();
         dispatch(setMarkdownContent(text));
+        dispatch(updateReadingSettings({ layout: 'reader-only' }));
         dispatch(setActiveTab('markdown'));
         dispatch(
           setNotification({
             type: 'success',
-            message: `Loaded "${mdFile.name}" into Markdown Studio.`,
+            message: `Loaded "${mdFile.name}" into Markdown Reader.`,
           })
         );
         return;
@@ -175,10 +176,10 @@ export const Header: React.FC = () => {
         <button
           className={`nav-tab-btn ${activeTab === 'markdown' ? 'active' : ''}`}
           onClick={() => dispatch(setActiveTab('markdown'))}
-          title="Markdown to PDF Studio & Immersive Reader"
+          title="Dedicated Fluid Markdown Reader & Document Studio"
         >
           <BookOpen size={16} />
-          <span>Markdown Studio</span>
+          <span>Markdown Reader</span>
         </button>
       </nav>
 

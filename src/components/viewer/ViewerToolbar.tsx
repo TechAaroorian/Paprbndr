@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { setActiveTab } from '../../store/uiSlice';
+import { updateReadingSettings } from '../../store/markdownSlice';
 import {
   nextPage,
   prevPage,
@@ -115,12 +116,15 @@ export const ViewerToolbar: React.FC = () => {
             {activeDoc?.sourceType === 'markdown' && (
               <button
                 type="button"
-                onClick={() => dispatch(setActiveTab('markdown'))}
+                onClick={() => {
+                  dispatch(updateReadingSettings({ layout: 'reader-only' }));
+                  dispatch(setActiveTab('markdown'));
+                }}
                 className="btn-back-to-markdown"
-                title="Return to Markdown Studio to edit or adjust document"
+                title="Open in dedicated Markdown Reader for optimal fluid reading"
               >
                 <BookOpen size={12} />
-                <span>Edit in Markdown</span>
+                <span>Open in Markdown Reader</span>
               </button>
             )}
           </div>

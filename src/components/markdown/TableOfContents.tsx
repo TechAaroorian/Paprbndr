@@ -6,12 +6,14 @@ interface TableOfContentsProps {
   items: TocItem[];
   isOpen: boolean;
   onToggle: () => void;
+  activeId?: string;
 }
 
 export const TableOfContents: React.FC<TableOfContentsProps> = ({
   items,
   isOpen,
   onToggle,
+  activeId,
 }) => {
   const handleScrollToHeading = (id: string) => {
     const el = document.getElementById(id);
@@ -62,7 +64,7 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({
               <button
                 key={item.id}
                 type="button"
-                className={`toc-item-link level-${item.level}`}
+                className={`toc-item-link level-${item.level} ${item.id === activeId ? 'active' : ''}`}
                 onClick={() => handleScrollToHeading(item.id)}
                 title={item.title}
               >

@@ -14,6 +14,7 @@ export const MarkdownStudio: React.FC = () => {
   const readingSettings = useAppSelector((state) => state.markdown.readingSettings);
 
   const [isTocOpen, setIsTocOpen] = useState<boolean>(true);
+  const [activeHeadingId, setActiveHeadingId] = useState<string>('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Compute live reading stats and headings outline
@@ -53,6 +54,7 @@ export const MarkdownStudio: React.FC = () => {
           items={tocItems}
           isOpen={isTocOpen}
           onToggle={() => setIsTocOpen(!isTocOpen)}
+          activeId={activeHeadingId}
         />
 
         {/* Studio Content Grid */}
@@ -62,7 +64,7 @@ export const MarkdownStudio: React.FC = () => {
           )}
 
           {(layout === 'split' || layout === 'reader-only') && (
-            <ImmersiveReader />
+            <ImmersiveReader onHeadingChange={setActiveHeadingId} />
           )}
         </div>
       </div>

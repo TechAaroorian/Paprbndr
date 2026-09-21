@@ -1533,6 +1533,17 @@ input, select {
   color: var(--text-primary);
 }
 
+.toc-item-link.active {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.toc-item-link.active .toc-bullet {
+  background: var(--accent-blue);
+  transform: scale(1.4);
+}
+
 .toc-item-link.level-1 {
   font-weight: 700;
   color: var(--text-primary);
@@ -2054,6 +2065,124 @@ input, select {
   display: block;
 }
 
+/* Reader Progress Bar */
+.reader-progress-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.reader-progress-fill {
+  height: 100%;
+  background: var(--accent-blue);
+  transition: width 0.1s ease;
+}
+
+.theme-sepia .reader-progress-fill {
+  background: #d97706;
+}
+
+.theme-dark .reader-progress-fill,
+.theme-nord .reader-progress-fill {
+  background: #38bdf8;
+}
+
+/* In-Document Search Overlay */
+.reader-search-overlay {
+  position: absolute;
+  top: 16px;
+  right: 32px;
+  z-index: 60;
+  animation: fadeInDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reader-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.reader-search-input {
+  border: none;
+  outline: none;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  background: transparent;
+  width: 190px;
+}
+
+.reader-search-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  padding-left: 6px;
+  border-left: 1px solid var(--border-light);
+}
+
+.btn-search-nav {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-search-nav:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.btn-search-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.btn-search-close {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-search-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Search Highlights */
+mark.reader-search-highlight {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+mark.reader-search-highlight.current {
+  background: #38bdf8;
+  color: #0c4a6e;
+  box-shadow: 0 0 0 2px #0284c7;
+}
+
 /* Floating Action Bar in Reader */
 .reader-floating-action-bar {
   position: absolute;
@@ -2071,6 +2200,18 @@ input, select {
   gap: 12px;
   box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.28);
   z-index: 40;
+}
+
+.reader-progress-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  padding-right: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
 }
 
 .action-bar-label {
