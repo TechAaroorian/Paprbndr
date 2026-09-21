@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Files, Eye, ShieldCheck, Sparkles, FilePlus, GitCompare } from 'lucide-react';
+import { Files, Eye, ShieldCheck, Sparkles, FilePlus, GitCompare, BookOpen } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setActiveTab, setNotification } from '../store/uiSlice';
 import { addDocuments } from '../store/documentsSlice';
@@ -146,6 +146,15 @@ export const Header: React.FC = () => {
         >
           <GitCompare size={16} />
           <span>Compare & Diff</span>
+        </button>
+
+        <button
+          className={`nav-tab-btn ${activeTab === 'markdown' ? 'active' : ''}`}
+          onClick={() => dispatch(setActiveTab('markdown'))}
+          title="Markdown to PDF Studio & Immersive Reader"
+        >
+          <BookOpen size={16} />
+          <span>Markdown Studio</span>
         </button>
       </nav>
 

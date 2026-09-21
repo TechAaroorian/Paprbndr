@@ -10,6 +10,10 @@ import {
   Download,
   ScrollText,
   Files,
+  Sun,
+  Coffee,
+  Moon,
+  Minimize2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { setActiveTab } from '../../store/uiSlice';
@@ -24,6 +28,8 @@ import {
   setLayoutMode,
   toggleSidebar,
   setViewerDoc,
+  setReadingTheme,
+  toggleZenMode,
 } from '../../store/viewerSlice';
 import { getBlob } from '../../services/bufferRegistry';
 import { downloadBlob } from '../../services/pdfService';
@@ -38,6 +44,8 @@ export const ViewerToolbar: React.FC = () => {
     zoom,
     layoutMode,
     sidebarOpen,
+    readingTheme,
+    zenMode,
   } = useAppSelector((state) => state.viewer);
 
   const activeDoc = documents.find((d) => d.id === activeDocId);
@@ -197,6 +205,51 @@ export const ViewerToolbar: React.FC = () => {
           }
         >
           {layoutMode === 'continuous' ? <ScrollText size={16} /> : <Maximize2 size={16} />}
+        </button>
+
+        <div className="toolbar-divider" />
+
+        {/* PDF Reading Tone Filters */}
+        <div className="pdf-reading-tones">
+          <button
+            type="button"
+            className={`tone-btn original ${readingTheme === 'original' ? 'active' : ''}`}
+            onClick={() => dispatch(setReadingTheme('original'))}
+            title="Original document colors"
+          >
+            <Sun size={13} />
+            <span>Normal</span>
+          </button>
+          <button
+            type="button"
+            className={`tone-btn sepia ${readingTheme === 'sepia' ? 'active' : ''}`}
+            onClick={() => dispatch(setReadingTheme('sepia'))}
+            title="Warm Eye-Comfort Sepia Tone"
+          >
+            <Coffee size={13} />
+            <span>Sepia</span>
+          </button>
+          <button
+            type="button"
+            className={`tone-btn night ${readingTheme === 'night' ? 'active' : ''}`}
+            onClick={() => dispatch(setReadingTheme('night'))}
+            title="High-Contrast Night Reading Mode"
+          >
+            <Moon size={13} />
+            <span>Night</span>
+          </button>
+        </div>
+
+        <div className="toolbar-divider" />
+
+        {/* Zen Mode Toggle */}
+        <button
+          type="button"
+          className={`btn-icon ${zenMode ? 'active' : ''}`}
+          onClick={() => dispatch(toggleZenMode())}
+          title={zenMode ? 'Exit Zen Mode' : 'Zen Focus Reading Mode'}
+        >
+          {zenMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
         </button>
 
         <div className="toolbar-divider" />

@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { PageLayoutMode, ViewScaleMode } from '../types/pdf';
+import type { PageLayoutMode, ViewScaleMode, PdfReadingTheme } from '../types/pdf';
 
 interface ViewerState {
   activeDocId: string | null;
@@ -10,6 +10,8 @@ interface ViewerState {
   rotation: number;
   layoutMode: PageLayoutMode;
   sidebarOpen: boolean;
+  readingTheme: PdfReadingTheme;
+  zenMode: boolean;
 }
 
 const initialState: ViewerState = {
@@ -21,6 +23,8 @@ const initialState: ViewerState = {
   rotation: 0,
   layoutMode: 'continuous',
   sidebarOpen: true,
+  readingTheme: 'original',
+  zenMode: false,
 };
 
 export const viewerSlice = createSlice({
@@ -75,11 +79,22 @@ export const viewerSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
     },
+    setReadingTheme: (state, action: PayloadAction<PdfReadingTheme>) => {
+      state.readingTheme = action.payload;
+    },
+    setZenMode: (state, action: PayloadAction<boolean>) => {
+      state.zenMode = action.payload;
+    },
+    toggleZenMode: (state) => {
+      state.zenMode = !state.zenMode;
+    },
     resetViewer: (state) => {
       state.currentPage = 1;
       state.zoom = 1.0;
       state.scaleMode = 'fit-width';
       state.rotation = 0;
+      state.readingTheme = 'original';
+      state.zenMode = false;
     },
   },
 });
@@ -96,6 +111,9 @@ export const {
   rotateViewer,
   setLayoutMode,
   toggleSidebar,
+  setReadingTheme,
+  setZenMode,
+  toggleZenMode,
   resetViewer,
 } = viewerSlice.actions;
 

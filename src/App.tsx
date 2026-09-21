@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { MergeView } from './components/merge/MergeView';
 import { Viewer } from './components/viewer/Viewer';
 import { DiffView } from './components/diff/DiffView';
+import { MarkdownStudio } from './components/markdown/MarkdownStudio';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
         {activeTab === 'viewer' && <Viewer />}
         {activeTab === 'merge' && <MergeView />}
         {activeTab === 'diff' && <DiffView />}
+        {activeTab === 'markdown' && <MarkdownStudio />}
       </main>
 
       {/* Toast Notification Banner */}
