@@ -1,11 +1,13 @@
 import React, { useRef } from 'react';
-import { Files, Eye, ShieldCheck, Sparkles, FilePlus, GitCompare } from 'lucide-react';
+import { Files, Eye, ShieldCheck, Sparkles, FilePlus, GitCompare, BookOpen } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setActiveTab, setNotification } from '../store/uiSlice';
 import { addDocuments } from '../store/documentsSlice';
 import { createSamplePdf, parsePdfFile } from '../services/pdfService';
 import { setViewerDoc } from '../store/viewerSlice';
 import { PaprbndrLogo } from './PaprbndrLogo';
+
+import { setMarkdownContent, updateReadingSettings } from '../store/markdownSlice';
 
 export const Header: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -16,34 +18,57 @@ export const Header: React.FC = () => {
 
   const activeDoc = documents.find((d) => d.id === activeViewerDocId);
 
-  const handleOpenPdfFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOpenDocFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     try {
-      const parsedDocs = await Promise.all(
-        Array.from(files)
-          .filter((f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'))
-          .map((f) => parsePdfFile(f))
+      // Check if user selected a markdown file
+      const mdFile = Array.from(files).find((f) =>
+        f.name.toLowerCase().endsWith('.md') ||
+        f.name.toLowerCase().endsWith('.markdown') ||
+        f.name.toLowerCase().endsWith('.txt')
       );
 
-      if (parsedDocs.length > 0) {
-        dispatch(addDocuments(parsedDocs));
-        dispatch(setViewerDoc({ docId: parsedDocs[0].id, totalPages: parsedDocs[0].totalPages }));
-        dispatch(setActiveTab('viewer'));
+      if (mdFile) {
+        const text = await mdFile.text();
+        dispatch(setMarkdownContent(text));
+        dispatch(updateReadingSettings({ layout: 'reader-only' }));
+        dispatch(setActiveTab('markdown'));
         dispatch(
           setNotification({
             type: 'success',
-            message: `Loaded ${parsedDocs[0].name} in viewer.`,
+            message: `Loaded "${mdFile.name}" into Markdown Reader.`,
           })
         );
+        return;
+      }
+
+      // Otherwise parse PDF files
+      const pdfFiles = Array.from(files).filter(
+        (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+      );
+
+      if (pdfFiles.length > 0) {
+        const parsedDocs = await Promise.all(pdfFiles.map((f) => parsePdfFile(f)));
+        if (parsedDocs.length > 0) {
+          dispatch(addDocuments(parsedDocs));
+          dispatch(setViewerDoc({ docId: parsedDocs[0].id, totalPages: parsedDocs[0].totalPages }));
+          dispatch(setActiveTab('viewer'));
+          dispatch(
+            setNotification({
+              type: 'success',
+              message: `Loaded ${parsedDocs[0].name} in viewer.`,
+            })
+          );
+        }
       }
     } catch (err) {
       console.error(err);
       dispatch(
         setNotification({
           type: 'error',
-          message: 'Failed to open PDF file.',
+          message: 'Failed to open document file.',
         })
       );
     } finally {
@@ -91,9 +116,9 @@ export const Header: React.FC = () => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="application/pdf,.pdf"
+        accept="application/pdf,.pdf,.md,.markdown,.txt"
         style={{ display: 'none' }}
-        onChange={handleOpenPdfFile}
+        onChange={handleOpenDocFile}
       />
 
       <div className="brand-section">
@@ -147,6 +172,15 @@ export const Header: React.FC = () => {
           <GitCompare size={16} />
           <span>Compare & Diff</span>
         </button>
+
+        <button
+          className={`nav-tab-btn ${activeTab === 'markdown' ? 'active' : ''}`}
+          onClick={() => dispatch(setActiveTab('markdown'))}
+          title="Dedicated Fluid Markdown Reader & Document Studio"
+        >
+          <BookOpen size={16} />
+          <span>Markdown Reader</span>
+        </button>
       </nav>
 
       <div className="header-actions">
@@ -154,10 +188,10 @@ export const Header: React.FC = () => {
           className="btn-secondary"
           onClick={() => fileInputRef.current?.click()}
           style={{ fontSize: '0.8rem', padding: '6px 12px' }}
-          title="Open a PDF to view immediately"
+          title="Open a PDF or Markdown (.md) document"
         >
           <FilePlus size={15} />
-          <span>Open PDF</span>
+          <span>Open File</span>
         </button>
 
         {documents.length === 0 && (

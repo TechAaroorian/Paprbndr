@@ -5,12 +5,21 @@ import { Header } from './components/Header';
 import { MergeView } from './components/merge/MergeView';
 import { Viewer } from './components/viewer/Viewer';
 import { DiffView } from './components/diff/DiffView';
+import { MarkdownStudio } from './components/markdown/MarkdownStudio';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const activeTab = useAppSelector((state) => state.ui.activeTab);
   const notification = useAppSelector((state) => state.ui.notification);
+
+  const isViewerZen = useAppSelector(
+    (state) => state.ui.activeTab === 'viewer' && state.viewer.zenMode
+  );
+  const isMarkdownZen = useAppSelector(
+    (state) => state.ui.activeTab === 'markdown' && state.markdown.readingSettings.zenMode
+  );
+  const isZenMode = isViewerZen || isMarkdownZen;
 
   // Auto-dismiss notification after 4 seconds
   useEffect(() => {
@@ -23,13 +32,14 @@ export const App: React.FC = () => {
   }, [notification, dispatch]);
 
   return (
-    <div className="app-container">
-      <Header />
+    <div className={`app-container ${isZenMode ? 'zen-fullscreen' : ''}`}>
+      {!isZenMode && <Header />}
 
       <main className="main-content">
         {activeTab === 'viewer' && <Viewer />}
         {activeTab === 'merge' && <MergeView />}
         {activeTab === 'diff' && <DiffView />}
+        {activeTab === 'markdown' && <MarkdownStudio />}
       </main>
 
       {/* Toast Notification Banner */}

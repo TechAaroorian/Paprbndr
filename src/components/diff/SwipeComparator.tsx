@@ -141,6 +141,13 @@ export const SwipeComparator: React.FC<SwipeComparatorProps> = ({
     updatePosition(e.clientX);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length > 0) {
+      setIsDragging(true);
+      updatePosition(e.touches[0].clientX);
+    }
+  };
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -154,14 +161,30 @@ export const SwipeComparator: React.FC<SwipeComparatorProps> = ({
       }
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging && e.touches.length > 0) {
+        updatePosition(e.touches[0].clientX);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isDragging) {
+        setIsDragging(false);
+      }
+    };
+
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      window.addEventListener('touchend', handleTouchEnd);
     }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDragging, updatePosition]);
 
@@ -175,6 +198,7 @@ export const SwipeComparator: React.FC<SwipeComparatorProps> = ({
           height: pageDims.height ? `${pageDims.height}px` : 'auto',
         }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         {/* Layer B (Background / Revised) */}
         <div className="swipe-layer-b">
