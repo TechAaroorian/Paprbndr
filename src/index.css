@@ -2499,6 +2499,256 @@ input, select {
   margin: 0 2px;
 }
 
+/* ==========================================================================
+   MOBILE FIRST RESPONSIVE SYSTEM
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .app-header {
+    padding: 0 16px;
+  }
+  
+  .merge-container {
+    padding: 20px 16px 48px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --header-height: 56px;
+  }
+
+  /* Header */
+  .app-header {
+    height: 56px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .brand-badge {
+    display: none;
+  }
+
+  .brand-title {
+    font-size: 0.95rem;
+  }
+
+  .nav-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 2px;
+    gap: 2px;
+    max-width: calc(100vw - 140px);
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab-btn {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .tab-badge {
+    display: none;
+  }
+
+  .header-actions .btn-secondary span {
+    display: none;
+  }
+
+  .header-actions .btn-secondary {
+    padding: 6px;
+  }
+
+  /* Viewer Layout & Toolbar */
+  .viewer-layout {
+    height: calc(100vh - 56px);
+  }
+
+  .viewer-layout.zen-active {
+    height: 100vh;
+  }
+
+  .viewer-toolbar {
+    height: 46px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 8px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .viewer-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .viewer-toolbar .toolbar-group {
+    flex-shrink: 0;
+  }
+
+  /* Thumbnail Sidebar on Mobile as an overlay drawer */
+  .thumbnail-sidebar {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 45;
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-lg);
+    width: 200px !important;
+  }
+
+  /* Zen Mode floating bar */
+  .zen-floating-bar {
+    bottom: 16px;
+    padding: 5px 10px;
+    gap: 5px;
+    max-width: 95vw;
+    font-size: 0.72rem;
+  }
+
+  .zen-btn {
+    padding: 4px 7px;
+    font-size: 0.72rem;
+  }
+
+  /* Markdown Studio */
+  .markdown-studio-root {
+    height: calc(100vh - 56px);
+  }
+
+  .reading-settings-bar {
+    height: 46px;
+    padding: 0 8px;
+    gap: 8px;
+  }
+
+  .reading-stats-badge {
+    display: none;
+  }
+
+  .studio-content-grid.layout-split {
+    grid-template-columns: 1fr !important;
+  }
+
+  .toc-sidebar {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 45;
+    box-shadow: var(--shadow-lg);
+    width: 240px !important;
+  }
+
+  .reader-scroll-viewport {
+    padding: 24px 14px 96px 14px;
+  }
+
+  .reader-floating-action-bar {
+    bottom: 16px;
+    padding: 6px 10px;
+    gap: 6px;
+    max-width: 95vw;
+  }
+
+  .action-bar-label {
+    display: none;
+  }
+
+  .btn-reader-action {
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+
+  /* Merge Workspace on Mobile */
+  .merge-container {
+    padding: 16px 12px 64px 12px;
+  }
+
+  .pages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 10px;
+  }
+
+  .merge-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
+    bottom: 12px;
+  }
+
+  .merge-summary-stats {
+    justify-content: space-around;
+    gap: 10px;
+  }
+
+  .merge-actions-group {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .output-name-input {
+    width: 100% !important;
+  }
+
+  .merge-actions-group .btn-accent {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Diff View on Mobile */
+  .diff-toolbar {
+    height: 48px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 8px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .side-by-side-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-tab-btn span {
+    display: none;
+  }
+
+  .nav-tab-btn {
+    padding: 6px 8px;
+  }
+
+  .brand-title {
+    font-size: 0.88rem;
+  }
+
+  .brand-logo-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brand-logo-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
 /* Print CSS */
 @media print {
   .app-header,

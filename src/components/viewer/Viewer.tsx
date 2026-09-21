@@ -8,6 +8,9 @@ import {
   setZenMode,
   prevPage,
   nextPage,
+  zoomIn,
+  zoomOut,
+  setZoom,
 } from '../../store/viewerSlice';
 import { setActiveTab } from '../../store/uiSlice';
 import { addDocuments } from '../../store/documentsSlice';
@@ -24,6 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Minimize2,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 
 interface PageCanvasProps {
@@ -107,7 +112,11 @@ const PageCanvas: React.FC<PageCanvasProps> = ({
   }, [pdfDoc, pageNumber, zoom, rotation]);
 
   return (
-    <div className="page-canvas-wrapper" data-page-number={pageNumber}>
+    <div
+      id={`page-container-${pageNumber}`}
+      className="page-canvas-wrapper"
+      data-page-number={pageNumber}
+    >
       <canvas ref={canvasRef} className="pdf-page-canvas" />
       <div className="page-canvas-badge">Page {pageNumber}</div>
     </div>
@@ -199,36 +208,49 @@ export const Viewer: React.FC = () => {
     };
   }, [activeDocId]);
 
-  // Handle scroll to page when thumbnail clicked
-  const handleScrollToPage = useCallback((pageNum: number) => {
-    if (layoutMode === 'continuous') {
-      const pageEl = document.getElementById(`page-container-${pageNum}`);
-      if (pageEl && viewportRef.current) {
-        pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Handle scroll to page when thumbnail clicked from left navigation
+  const handleScrollToPage = useCallback(
+    (pageNum: number) => {
+      dispatch(setCurrentPage(pageNum));
+      if (layoutMode === 'continuous') {
+        const pageEl = document.getElementById(`page-container-${pageNum}`);
+        if (pageEl && viewportRef.current) {
+          pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
-    }
-  }, [layoutMode]);
+    },
+    [layoutMode, dispatch]
+  );
 
   // Handle Continuous scroll page tracking
   const handleViewportScroll = () => {
     if (layoutMode !== 'continuous' || !viewportRef.current || totalPages <= 1) return;
 
-    const viewportTop = viewportRef.current.scrollTop;
-    const viewportHeight = viewportRef.current.clientHeight;
-    const viewportMiddle = viewportTop + viewportHeight / 3;
+    const viewport = viewportRef.current;
+    const viewportRect = viewport.getBoundingClientRect();
+    const viewportCenter = viewportRect.top + viewportRect.height / 3;
+
+    let closestPage = currentPage;
+    let minDistance = Infinity;
 
     for (let i = 1; i <= totalPages; i++) {
       const el = document.getElementById(`page-container-${i}`);
       if (el) {
-        const top = el.offsetTop;
-        const bottom = top + el.clientHeight;
-        if (top <= viewportMiddle && bottom >= viewportMiddle) {
-          if (currentPage !== i) {
-            dispatch(setCurrentPage(i));
-          }
+        const rect = el.getBoundingClientRect();
+        if (rect.top <= viewportCenter && rect.bottom >= viewportCenter) {
+          closestPage = i;
           break;
         }
+        const dist = Math.abs(rect.top - viewportCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestPage = i;
+        }
       }
+    }
+
+    if (closestPage !== currentPage) {
+      dispatch(setCurrentPage(closestPage));
     }
   };
 
@@ -471,11 +493,43 @@ export const Viewer: React.FC = () => {
 
           <div className="zen-sep" />
 
+          {/* Zoom controls in Zen Mode */}
+          <button
+            type="button"
+            className="zen-btn"
+            onClick={() => dispatch(zoomOut())}
+            disabled={zoom <= 0.3}
+            title="Zoom Out"
+          >
+            <ZoomOut size={15} />
+          </button>
+
+          <span
+            className="zen-zoom-label"
+            onClick={() => dispatch(setZoom(1.0))}
+            title="Click to reset zoom to 100%"
+            style={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, padding: '0 4px', color: '#e2e8f0' }}
+          >
+            {Math.round(zoom * 100)}%
+          </span>
+
+          <button
+            type="button"
+            className="zen-btn"
+            onClick={() => dispatch(zoomIn())}
+            disabled={zoom >= 3.5}
+            title="Zoom In"
+          >
+            <ZoomIn size={15} />
+          </button>
+
+          <div className="zen-sep" />
+
           <button
             type="button"
             className="zen-btn"
             onClick={() => dispatch(toggleZenMode())}
-            title="Exit Zen Mode"
+            title="Exit Zen Mode (Esc)"
           >
             <Minimize2 size={15} />
             <span>Exit Zen</span>
