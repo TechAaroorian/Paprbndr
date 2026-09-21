@@ -5,6 +5,7 @@ import {
   setCurrentPage,
   setViewerDoc,
   toggleZenMode,
+  setZenMode,
   prevPage,
   nextPage,
 } from '../../store/viewerSlice';
@@ -131,6 +132,18 @@ export const Viewer: React.FC = () => {
   const [pdfProxy, setPdfProxy] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Listen for Escape key to exit Zen mode
+  useEffect(() => {
+    if (!zenMode) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        dispatch(setZenMode(false));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [zenMode, dispatch]);
 
   // Synchronize activeDocId if null but documents exist
   useEffect(() => {

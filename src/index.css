@@ -636,6 +636,11 @@ input, select {
   height: calc(100vh - var(--header-height));
   overflow: hidden;
   background: #e5e7eb;
+  transition: height 0.2s ease;
+}
+
+.viewer-layout.zen-active {
+  height: 100vh;
 }
 
 .viewer-toolbar {
