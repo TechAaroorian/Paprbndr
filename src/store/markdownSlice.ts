@@ -108,6 +108,9 @@ export const markdownSlice = createSlice({
     removeAsset: (state, action: PayloadAction<string>) => {
       state.assets = state.assets.filter((a) => a.id !== action.payload);
     },
+    clearAssets: (state) => {
+      state.assets = [];
+    },
     updateReadingSettings: (
       state,
       action: PayloadAction<Partial<MarkdownReadingSettings>>
@@ -136,6 +139,7 @@ export const {
   setMarkdownContent,
   addAsset,
   removeAsset,
+  clearAssets,
   updateReadingSettings,
   updateExportSettings,
   setAssetModalOpen,
