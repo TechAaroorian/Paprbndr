@@ -14,6 +14,7 @@ import {
   Coffee,
   Moon,
   Minimize2,
+  BookOpen,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { setActiveTab } from '../../store/uiSlice';
@@ -110,6 +111,18 @@ export const ViewerToolbar: React.FC = () => {
                 </option>
               ))}
             </select>
+
+            {activeDoc?.sourceType === 'markdown' && (
+              <button
+                type="button"
+                onClick={() => dispatch(setActiveTab('markdown'))}
+                className="btn-back-to-markdown"
+                title="Return to Markdown Studio to edit or adjust document"
+              >
+                <BookOpen size={12} />
+                <span>Edit in Markdown</span>
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -81,6 +81,7 @@ export const ImmersiveReader: React.FC = () => {
           isExpanded: true,
           pages,
           createdAt: Date.now(),
+          sourceType: 'markdown',
         };
 
         dispatch(addDocuments([newDoc]));
@@ -91,7 +92,7 @@ export const ImmersiveReader: React.FC = () => {
           dispatch(
             setNotification({
               type: 'success',
-              message: `Opened "${filename}" in High-DPI Document Reader.`,
+              message: `Compiled markdown to PDF and opened in Viewer.`,
             })
           );
         } else {
@@ -156,14 +157,14 @@ export const ImmersiveReader: React.FC = () => {
             className="btn-reader-action"
             onClick={() => handleGeneratePdf('viewer')}
             disabled={isExporting}
-            title="Open generated PDF in Paprbndr Reader"
+            title="Compile Markdown to PDF and preview in Document Reader"
           >
             {isExporting && exportAction === 'viewer' ? (
               <Loader2 size={15} className="spinner" />
             ) : (
               <Eye size={15} />
             )}
-            <span>Open in Viewer</span>
+            <span>Preview in PDF Viewer</span>
           </button>
 
           <button

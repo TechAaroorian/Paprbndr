@@ -29,6 +29,7 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  BookOpen,
 } from 'lucide-react';
 
 interface PageCanvasProps {
@@ -377,6 +378,16 @@ export const Viewer: React.FC = () => {
             <button type="button" className="btn-secondary" onClick={handleLoadSamples}>
               <Sparkles size={16} style={{ color: '#d97706' }} />
               <span>Load Sample PDF</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => dispatch(setActiveTab('markdown'))}
+              title="Switch to Markdown to PDF Studio"
+            >
+              <BookOpen size={16} />
+              <span>Markdown Studio</span>
             </button>
 
             <button

@@ -1,5 +1,6 @@
 import { marked } from 'marked';
 import { PDFDocument, rgb, StandardFonts, PageSizes } from 'pdf-lib';
+import html2canvas from 'html2canvas';
 import type { MarkdownAsset, PdfExportSettings } from '../types/pdf';
 import { generateId } from './pdfService';
 import { setBuffer } from './bufferRegistry';
@@ -155,7 +156,7 @@ export function compileMarkdownToHtml(
 }
 
 /**
- * Generate a client-side PDF document using pdf-lib and register in bufferRegistry
+ * Generate a client-side high-DPI PDF document from Markdown HTML using html2canvas & pdf-lib
  */
 export async function generatePdfFromMarkdown(options: {
   markdown: string;
@@ -178,8 +179,6 @@ export async function generatePdfFromMarkdown(options: {
 
   const fontHelvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontHelveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const fontHelveticaOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-  const fontCourier = await pdfDoc.embedFont(StandardFonts.Courier);
 
   // Determine page dimensions
   const baseSize = exportSettings.pageSize === 'Letter' ? PageSizes.Letter : PageSizes.A4;
@@ -187,306 +186,189 @@ export async function generatePdfFromMarkdown(options: {
   const pageWidth = isLandscape ? baseSize[1] : baseSize[0];
   const pageHeight = isLandscape ? baseSize[0] : baseSize[1];
 
-  const margin = 50;
-  const contentWidth = pageWidth - margin * 2;
-  const footerHeight = 40;
-  const headerHeight = exportSettings.includeHeader ? 40 : 20;
-  const maxY = pageHeight - headerHeight;
-  const minY = margin + footerHeight;
+  const marginX = 36;
+  const marginTop = exportSettings.includeHeader ? 40 : 28;
+  const marginBottom = 36;
+  const contentW = pageWidth - marginX * 2;
+  const contentH = pageHeight - marginTop - marginBottom;
 
-  let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-  let currentY = maxY;
-  let pageNumber = 1;
+  // Compile full HTML with assets and heading IDs
+  const compiledHtml = compileMarkdownToHtml(markdown, assets);
 
-  const checkNewPage = (neededHeight: number) => {
-    if (currentY - neededHeight < minY) {
-      drawFooter(currentPage, pageNumber);
-      currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      pageNumber++;
-      currentY = maxY;
-      drawHeader(currentPage);
-    }
-  };
+  // Create off-screen A4 container with crisp report styling
+  const container = document.createElement('div');
+  container.className = 'markdown-pdf-export-container';
+  container.style.position = 'fixed';
+  container.style.left = '-99999px';
+  container.style.top = '0';
+  container.style.width = '794px'; // Standard A4 width at 96 DPI
+  container.style.minHeight = '1123px';
+  container.style.padding = '44px 48px';
+  container.style.boxSizing = 'border-box';
+  container.style.background = '#ffffff';
+  container.style.color = '#0f172a';
+  container.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  container.style.fontSize = '14px';
+  container.style.lineHeight = '1.65';
+  container.style.zIndex = '-9999';
 
-  const drawHeader = (page: typeof currentPage) => {
-    if (!exportSettings.includeHeader) return;
-    page.drawText(exportSettings.title || 'Paprbndr Document', {
-      x: margin,
-      y: pageHeight - 30,
-      size: 8,
-      font: fontHelveticaBold,
-      color: rgb(0.4, 0.45, 0.5),
-    });
-    page.drawLine({
-      start: { x: margin, y: pageHeight - 34 },
-      end: { x: pageWidth - margin, y: pageHeight - 34 },
-      thickness: 0.5,
-      color: rgb(0.85, 0.88, 0.92),
-    });
-  };
+  container.innerHTML = `
+    <div class="pdf-export-content-wrapper">
+      ${compiledHtml}
+    </div>
+  `;
 
-  const drawFooter = (page: typeof currentPage, pageNum: number) => {
-    // Footer divider line
-    page.drawLine({
-      start: { x: margin, y: margin + 20 },
-      end: { x: pageWidth - margin, y: margin + 20 },
-      thickness: 0.5,
-      color: rgb(0.85, 0.88, 0.92),
-    });
+  document.body.appendChild(container);
 
-    // Branding on bottom left
-    page.drawText('Paprbndr Studio • 100% Client-Side PDF', {
-      x: margin,
-      y: margin + 8,
-      size: 8,
-      font: fontHelvetica,
-      color: rgb(0.5, 0.55, 0.6),
-    });
-
-    if (exportSettings.includePageNumbers) {
-      const pageStr = `Page ${pageNum}`;
-      const width = fontHelvetica.widthOfTextAtSize(pageStr, 8);
-      page.drawText(pageStr, {
-        x: pageWidth - margin - width,
-        y: margin + 8,
-        size: 8,
-        font: fontHelveticaBold,
-        color: rgb(0.3, 0.35, 0.4),
-      });
-    }
-  };
-
-  // Draw first page header
-  drawHeader(currentPage);
-
-  // Clean lines for layout
-  const lines = markdown.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-
-    // Check for image syntax: ![alt](asset:...) or ![alt](data:...)
-    const imgMatch = rawLine.match(/!\[(.*?)\]\((.*?)\)/);
-    if (imgMatch) {
-      const src = imgMatch[2];
-      const targetAsset = assets.find(
-        (a) => a.id === src.replace('asset:', '') || a.name === src.replace('asset:', '') || src.startsWith('data:')
-      );
-
-      if (targetAsset || src.startsWith('data:image/')) {
-        const dataUrl = targetAsset ? targetAsset.dataUrl : src;
-        try {
-          // Embed image into pdf-lib
-          const isPng = dataUrl.includes('image/png');
-          const base64Data = dataUrl.split(',')[1];
-          if (base64Data) {
-            const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-            const embeddedImage = isPng
-              ? await pdfDoc.embedPng(imageBytes)
-              : await pdfDoc.embedJpg(imageBytes);
-
-            // Scale to fit content width nicely
-            const maxImgHeight = 220;
-            const aspect = embeddedImage.width / embeddedImage.height;
-            let displayW = Math.min(contentWidth, embeddedImage.width * 0.5);
-            let displayH = displayW / aspect;
-
-            if (displayH > maxImgHeight) {
-              displayH = maxImgHeight;
-              displayW = displayH * aspect;
+  try {
+    // Wait for all images inside container to load before capturing
+    const imgElements = Array.from(container.querySelectorAll('img'));
+    await Promise.all(
+      imgElements.map(
+        (img) =>
+          new Promise<void>((resolve) => {
+            if (img.complete) {
+              resolve();
+            } else {
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
             }
+          })
+      )
+    );
 
-            checkNewPage(displayH + 20);
-            currentPage.drawImage(embeddedImage, {
-              x: margin + (contentWidth - displayW) / 2,
-              y: currentY - displayH,
-              width: displayW,
-              height: displayH,
-            });
+    // Render container to master high-DPI canvas (2x Retina scaling)
+    const masterCanvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
 
-            currentY -= displayH + 16;
-            continue;
-          }
-        } catch (err) {
-          console.warn('Could not embed image asset into PDF:', err);
-        }
+    // In canvas coordinates, each PDF page content slice height corresponds to:
+    const sliceHeight = masterCanvas.width * (contentH / contentW);
+    const totalPages = Math.max(1, Math.ceil(masterCanvas.height / sliceHeight));
+
+    // Slice master canvas into individual PDF pages
+    for (let p = 0; p < totalPages; p++) {
+      const srcY = p * sliceHeight;
+      const currSliceHeight = Math.min(sliceHeight, masterCanvas.height - srcY);
+
+      // Create a slice canvas for this page
+      const sliceCanvas = document.createElement('canvas');
+      sliceCanvas.width = masterCanvas.width;
+      sliceCanvas.height = sliceHeight;
+      const sliceCtx = sliceCanvas.getContext('2d');
+      if (sliceCtx) {
+        // Fill white background
+        sliceCtx.fillStyle = '#ffffff';
+        sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        // Draw the slice
+        sliceCtx.drawImage(
+          masterCanvas,
+          0,
+          srcY,
+          masterCanvas.width,
+          currSliceHeight,
+          0,
+          0,
+          masterCanvas.width,
+          currSliceHeight
+        );
       }
-    }
 
-    // Heading 1
-    if (rawLine.startsWith('# ')) {
-      const text = rawLine.replace('# ', '').trim();
-      checkNewPage(38);
-      currentY -= 10;
-      currentPage.drawText(text, {
-        x: margin,
-        y: currentY,
-        size: 20,
-        font: fontHelveticaBold,
-        color: rgb(0.06, 0.09, 0.16),
+      const sliceDataUrl = sliceCanvas.toDataURL('image/png');
+      const base64Data = sliceDataUrl.split(',')[1];
+      const sliceBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+      const embeddedPng = await pdfDoc.embedPng(sliceBytes);
+
+      const pdfPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+      // Draw running header if enabled
+      if (exportSettings.includeHeader) {
+        pdfPage.drawText(exportSettings.title || 'Paprbndr Document', {
+          x: marginX,
+          y: pageHeight - 24,
+          size: 8,
+          font: fontHelveticaBold,
+          color: rgb(0.35, 0.4, 0.48),
+        });
+        pdfPage.drawLine({
+          start: { x: marginX, y: pageHeight - 28 },
+          end: { x: pageWidth - marginX, y: pageHeight - 28 },
+          thickness: 0.5,
+          color: rgb(0.85, 0.88, 0.92),
+        });
+      }
+
+      // Draw rendered content slice
+      pdfPage.drawImage(embeddedPng, {
+        x: marginX,
+        y: marginBottom,
+        width: contentW,
+        height: contentH,
       });
-      currentY -= 24;
-      continue;
-    }
 
-    // Heading 2
-    if (rawLine.startsWith('## ')) {
-      const text = rawLine.replace('## ', '').trim();
-      checkNewPage(30);
-      currentY -= 8;
-      currentPage.drawText(text, {
-        x: margin,
-        y: currentY,
-        size: 14,
-        font: fontHelveticaBold,
-        color: rgb(0.12, 0.16, 0.24),
-      });
-      currentY -= 18;
-      continue;
-    }
-
-    // Heading 3
-    if (rawLine.startsWith('### ')) {
-      const text = rawLine.replace('### ', '').trim();
-      checkNewPage(24);
-      currentY -= 6;
-      currentPage.drawText(text, {
-        x: margin,
-        y: currentY,
-        size: 11,
-        font: fontHelveticaBold,
-        color: rgb(0.2, 0.25, 0.35),
-      });
-      currentY -= 15;
-      continue;
-    }
-
-    // Horizontal Rule
-    if (rawLine.trim() === '---' || rawLine.trim() === '***') {
-      checkNewPage(18);
-      currentY -= 6;
-      currentPage.drawLine({
-        start: { x: margin, y: currentY },
-        end: { x: pageWidth - margin, y: currentY },
-        thickness: 0.75,
+      // Draw running footer divider
+      pdfPage.drawLine({
+        start: { x: marginX, y: 26 },
+        end: { x: pageWidth - marginX, y: 26 },
+        thickness: 0.5,
         color: rgb(0.85, 0.88, 0.92),
       });
-      currentY -= 14;
-      continue;
-    }
 
-    // Blockquote
-    if (rawLine.startsWith('> ')) {
-      const quoteText = rawLine.replace('> ', '').trim();
-      checkNewPage(22);
-      currentPage.drawLine({
-        start: { x: margin, y: currentY + 10 },
-        end: { x: margin, y: currentY - 4 },
-        thickness: 2.5,
-        color: rgb(0.15, 0.39, 0.92),
+      // Branding on footer
+      pdfPage.drawText('Paprbndr Studio • 100% Client-Side PDF', {
+        x: marginX,
+        y: 16,
+        size: 7.5,
+        font: fontHelvetica,
+        color: rgb(0.5, 0.55, 0.6),
       });
-      currentPage.drawText(quoteText, {
-        x: margin + 12,
-        y: currentY,
-        size: 9.5,
-        font: fontHelveticaOblique,
-        color: rgb(0.25, 0.3, 0.4),
-      });
-      currentY -= 16;
-      continue;
-    }
 
-    // Code block line / mono
-    if (rawLine.startsWith('    ') || rawLine.startsWith('```')) {
-      if (rawLine.startsWith('```')) continue;
-      checkNewPage(16);
-      currentPage.drawRectangle({
-        x: margin,
-        y: currentY - 2,
-        width: contentWidth,
-        height: 14,
-        color: rgb(0.95, 0.96, 0.98),
-      });
-      currentPage.drawText(rawLine.trim(), {
-        x: margin + 8,
-        y: currentY,
-        size: 8.5,
-        font: fontCourier,
-        color: rgb(0.1, 0.15, 0.25),
-      });
-      currentY -= 16;
-      continue;
-    }
-
-    // Standard paragraph or empty line
-    if (rawLine.trim() === '') {
-      currentY -= 8;
-      continue;
-    }
-
-    // Wrap regular body text cleanly
-    const fontSize = 9.5;
-    const lineHeight = 14;
-    const words = rawLine.split(' ');
-    let currentLine = '';
-
-    for (let w = 0; w < words.length; w++) {
-      const testLine = currentLine ? `${currentLine} ${words[w]}` : words[w];
-      const width = fontHelvetica.widthOfTextAtSize(testLine, fontSize);
-
-      if (width > contentWidth && currentLine) {
-        checkNewPage(lineHeight);
-        currentPage.drawText(currentLine, {
-          x: margin,
-          y: currentY,
-          size: fontSize,
-          font: fontHelvetica,
-          color: rgb(0.15, 0.2, 0.28),
+      // Running page number
+      if (exportSettings.includePageNumbers) {
+        const pageStr = `Page ${p + 1} of ${totalPages}`;
+        const width = fontHelvetica.widthOfTextAtSize(pageStr, 7.5);
+        pdfPage.drawText(pageStr, {
+          x: pageWidth - marginX - width,
+          y: 16,
+          size: 7.5,
+          font: fontHelveticaBold,
+          color: rgb(0.3, 0.35, 0.4),
         });
-        currentY -= lineHeight;
-        currentLine = words[w];
-      } else {
-        currentLine = testLine;
       }
     }
 
-    if (currentLine) {
-      checkNewPage(lineHeight);
-      currentPage.drawText(currentLine, {
-        x: margin,
-        y: currentY,
-        size: fontSize,
-        font: fontHelvetica,
-        color: rgb(0.15, 0.2, 0.28),
-      });
-      currentY -= lineHeight;
+    // Serialize to Uint8Array
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
+    const docId = generateId();
+
+    // Register in bufferRegistry so Paprbndr Viewer and Merger can access it in-RAM immediately
+    setBuffer(docId, blob);
+
+    const safeTitle = (exportSettings.title || 'document')
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    const filename = `${safeTitle || 'markdown-document'}.pdf`;
+
+    return {
+      blob,
+      docId,
+      totalPages,
+      filename,
+    };
+  } finally {
+    // Clean up offscreen container
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
     }
   }
-
-  // Draw final page footer
-  drawFooter(currentPage, pageNumber);
-
-  // Serialize to Uint8Array
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
-  const docId = generateId();
-
-  // Register in bufferRegistry so Paprbndr Viewer and Merger can access it in-RAM immediately
-  setBuffer(docId, blob);
-
-  const safeTitle = (exportSettings.title || 'document')
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-  const filename = `${safeTitle || 'markdown-document'}.pdf`;
-
-  return {
-    blob,
-    docId,
-    totalPages: pageNumber,
-    filename,
-  };
 }
+
 
 /**
  * Trigger native browser print for high-fidelity vector PDF export

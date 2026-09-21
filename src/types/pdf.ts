@@ -14,6 +14,7 @@ export interface DocumentItem {
   isExpanded: boolean;
   pages: PDFPageItem[];
   createdAt: number;
+  sourceType?: 'pdf' | 'markdown';
 }
 
 export type ActiveTab = 'viewer' | 'merge' | 'diff' | 'markdown';

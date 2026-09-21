@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   setMarkdownContent,
   setAssetModalOpen,
   resetMarkdownToSample,
 } from '../../store/markdownSlice';
+import { setNotification } from '../../store/uiSlice';
 import {
   Bold,
   Italic,
@@ -19,6 +20,8 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Trash2,
+  FolderOpen,
+  Download,
 } from 'lucide-react';
 
 interface MarkdownEditorProps {
@@ -27,6 +30,7 @@ interface MarkdownEditorProps {
 
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ textareaRef }) => {
   const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const content = useAppSelector((state) => state.markdown.content);
   const assets = useAppSelector((state) => state.markdown.assets);
 
@@ -70,8 +74,41 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ textareaRef }) =
     insertSnippet(checklistSnippet);
   };
 
+  const handleSaveMd = () => {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'document.md';
+    a.click();
+    URL.revokeObjectURL(url);
+    dispatch(setNotification({ type: 'success', message: 'Downloaded document.md' }));
+  };
+
+  const handleOpenMd = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      dispatch(setMarkdownContent(text));
+      dispatch(setNotification({ type: 'success', message: `Loaded "${file.name}" into editor.` }));
+    } catch {
+      dispatch(setNotification({ type: 'error', message: 'Failed to read markdown file.' }));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="markdown-editor-pane">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,.markdown,.txt"
+        style={{ display: 'none' }}
+        onChange={handleOpenMd}
+      />
+
       {/* Editor Header Toolbar */}
       <div className="editor-toolbar">
         <div className="toolbar-section">
@@ -164,6 +201,28 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ textareaRef }) =
         </div>
 
         <div className="toolbar-section right">
+          {/* Open Markdown File */}
+          <button
+            type="button"
+            className="editor-tool-btn"
+            onClick={() => fileInputRef.current?.click()}
+            title="Open Markdown file (.md, .txt)"
+          >
+            <FolderOpen size={14} />
+          </button>
+
+          {/* Save Markdown File */}
+          <button
+            type="button"
+            className="editor-tool-btn"
+            onClick={handleSaveMd}
+            title="Save Markdown file (.md)"
+          >
+            <Download size={14} />
+          </button>
+
+          <div className="editor-tool-sep" />
+
           {/* Asset Manager Trigger */}
           <button
             type="button"
